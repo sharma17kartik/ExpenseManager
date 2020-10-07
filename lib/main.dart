@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
+//import 'package:flutter/services.dart';
 
 import './widgets/tx_list.dart';
 import './widgets/new_tx.dart';
 import './models/transaction.dart';
 import './widgets/chart.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  // WidgetsFlutterBinding.ensureInitialized();
+  // SystemChrome.setPreferredOrientations([
+  //   DeviceOrientation.portraitUp,
+  //   DeviceOrientation.portraitDown,
+  // ]);
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter App',
+      title: 'Expense Manager',
       home: MyHomePage(),
       theme: ThemeData(
-          primarySwatch: Colors.red,
+          primarySwatch: Colors.green,
           fontFamily: 'QuickSand',
           textTheme: ThemeData.light().textTheme.copyWith(
               headline6: TextStyle(
@@ -57,6 +65,9 @@ class _MyHomePageState extends State<MyHomePage> {
     //   date: DateTime.now(),
     // )
   ];
+
+  bool _showChart = false;
+
   List<Transaction> get recentTx {
     return transaction.where((tx) {
       return tx.date.isAfter(
@@ -99,16 +110,27 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    final appBar = AppBar(
+      title: Text('Expense Manager'),
+      actions: [
+        IconButton(
+          icon: Icon(Icons.add_circle_outline),
+          onPressed: () => startNewTxt(context),
+        )
+      ],
+    );
+
+    final txListWidget = Container(
+      height: (MediaQuery.of(context).size.height -
+              appBar.preferredSize.height -
+              MediaQuery.of(context).padding.top) *
+          0.7,
+      child: TxList(transaction, deleteTx),
+    );
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Expenses Manager'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () => startNewTxt(context),
-          )
-        ],
-      ),
+      appBar: appBar,
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () => startNewTxt(context),
@@ -118,8 +140,48 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Chart(recentTx),
-            TxList(transaction, deleteTx),
+            if (isLandscape)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Show Chart'),
+                  Switch.adaptive(
+                    value: _showChart,
+                    onChanged: (val) {
+                      setState(() {
+                        _showChart = val;
+                      });
+                    },
+                  )
+                ],
+              ),
+            if (!isLandscape)
+              Container(
+                height: (MediaQuery.of(context).size.height -
+                        appBar.preferredSize.height -
+                        MediaQuery.of(context).padding.top) *
+                    0.3,
+                child: Chart(recentTx),
+              ),
+            if (!isLandscape) txListWidget,
+            if (isLandscape)
+              _showChart
+                  ? Container(
+                      height: (MediaQuery.of(context).size.height -
+                              appBar.preferredSize.height -
+                              MediaQuery.of(context).padding.top) *
+                          0.7,
+                      child: Chart(recentTx),
+                    )
+                  : txListWidget,
+            Text(
+              'Made By Kartik Sharma',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 20,
+                color: Colors.lightGreen,
+              ),
+            ),
           ],
         ),
       ),
